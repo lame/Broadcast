@@ -90,4 +90,5 @@ ENV/
 
 # Local
 config/
+migrations/
 app.db
