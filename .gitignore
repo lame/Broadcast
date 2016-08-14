@@ -89,6 +89,6 @@ ENV/
 .ropeproject
 
 # Local
-config/
+instances/
 migrations/
 app.db

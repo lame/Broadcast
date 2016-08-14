@@ -1,9 +1,8 @@
-from app import api
-from configparser import SafeConfigParser
+from app import app, tc
+from app.mod_sms.models import UserGroup, User, Message
 from flask import request
 from flask_restful import Resource, reqparse
 from twilio import twiml, TwilioRestException
-from twilio.rest import TwilioRestClient
 
 
 class Test(Resource):
@@ -15,15 +14,6 @@ class Test(Resource):
 
 class BaseMessage(Resource):
     def __init__(self):
-        parser = SafeConfigParser()
-        parser.read('config/config.ini')
-
-        self.twilio_phone_number = parser.get('TWILIO', 'PHONE_NUMBER')
-        self.twilio_client = TwilioRestClient(
-            parser.get('TWILIO', 'ACCOUNT_SID'),
-            parser.get('TWILIO', 'AUTH_TOKEN')
-        )
-
         message_reqparse = reqparse.RequestParser()
 
         if not request.values:
@@ -60,6 +50,9 @@ class ReceiveMessage(BaseMessage):
         resp.message('hello world')
         return str(resp)
 
+    def store_post(self):
+        pass
+
 
 class SendMessage(BaseMessage):
     """docstring for SendMessage"""
@@ -67,9 +60,9 @@ class SendMessage(BaseMessage):
     def post(self):
         """Send message from API"""
         try:
-            message = self.twilio_client.messages.create(
+            message = tc.messages.create(
                 to=self.kwargs.get('to_phone_number'),
-                from_=self.twilio_phone_number,
+                from_=app.config.get('TWILIO_PHONE_NUMBER'),
                 body=self.kwargs.get('body')
             )
             return 200
@@ -83,8 +76,3 @@ class Group(BaseMessage):
     def get(self):
         """Reply to message with group information"""
         pass
-
-api.add_resource(Test, '/')
-api.add_resource(SendMessage, '/send')
-api.add_resource(ReceiveMessage, '/receive')
-api.add_resource(Group, '/group')
