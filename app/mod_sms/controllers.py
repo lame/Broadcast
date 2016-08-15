@@ -47,6 +47,7 @@ class ReceiveMessage(BaseMessage):
     def post(self):
         """accept incoming message"""
         resp = twiml.Response()
+        from ipdb import set_trace; set_trace()
         resp.message('hello world')
         return str(resp)
 

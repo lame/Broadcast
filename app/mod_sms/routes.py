@@ -1,5 +1,5 @@
 from app import api
-from controllers import(
+from app.mod_sms.controllers import(
     Test,
     ReceiveMessage,
     SendMessage,
