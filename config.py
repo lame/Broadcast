@@ -19,6 +19,6 @@ class Development(Base):
     DEBUG = True
     SECRET_KEY = 'Replace_With_SecretKey'
     DATABASE_QUERY_TIMEOUT = 0.5
-    ACCOUNT_SID = 'ACd54f610007bb0fbf352df81d4fdff7dd'
-    AUTH_TOKEN = 'e7634c33b273b1e9c443338dfbe52ce9'
-    PHONE_NUMBER = '+17868378095'
+    ACCOUNT_SID = 'Replace with Account SID'
+    AUTH_TOKEN = 'Replace with Auth Token'
+    PHONE_NUMBER = 'Replace with Twillio Phone Number'
