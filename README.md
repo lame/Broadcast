@@ -1,8 +1,7 @@
 Current Master Branch Build:
 
 
-[![CircleCI](https://circleci.com/gh/rkk09c/Brodcast/tree/master.svg?style=svg&circle-token=4bb4c3cc6b30eb70d709f012585b11964f5b7a86)](https://circleci.com/gh/rkk09c/Brodcast/tree/master)
-
+[![CircleCI](https://circleci.com/gh/rkk09c/Broadcast/tree/master.svg?style=shield&circle-token=4bb4c3cc6b30eb70d709f012585b11964f5b7a86)](https://circleci.com/gh/rkk09c/Broadcast/tree/master)
 # Broadcast
 
 Boradcast is the fix to pesky MMS messages. Broadcast enables you to create groups, add and remove users, schedule events, and save conversation history all through simple SMS messages. Have a group message going but a user wants to add a friend? Broadcast will allow any user of a group to add new people to the group thread so getting together is easy. The new user to the group can even get context of the message thread when they join. Advanced features are a simple text away, you can text Broadcast to schedule an event and start a group with those invited, allowing seemless communication between you and the people that matter.
