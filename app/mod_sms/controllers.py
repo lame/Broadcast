@@ -1,4 +1,4 @@
-from app import app, tc
+from app import app, tc, db
 from app.mod_sms.models import UserGroup, User, Message
 from flask import request
 from flask_restful import Resource, reqparse
@@ -40,18 +40,41 @@ class BaseMessage(Resource):
         self.kwargs = message_reqparse.parse_args()
         super(BaseMessage, self).__init__()
 
+    def store_message(self, **kwargs):
+        message = Message(
+            body=kwargs.get('Body'),
+            message_sid=kwargs.get('SmsMessageSid'),
+            status=kwargs.get('SmsStatus'),
+            to_number=kwargs.get('To'),
+            to_zip=kwargs.get('ToZip'),
+            to_country=kwargs.get('ToCountry'),
+            from_number=kwargs.get('From'),
+            from_zip=kwargs.get('FromZip'),
+            from_country=kwargs.get('FromCountry')
+        )
+
+        user = User.query.filter_by(phone=kwargs.get('From')).first()
+        user.messages.append(message)
+
+        user_group = UserGroup.query.filter_by(user_group_name='meet me in the canyons').first()
+        user_group.messages.append(message)
+        user_group.users.append(user)
+
+        db.session.add(user)
+        db.session.add(user_group)
+        db.session.add(message)
+        db.session.commit()
+
 
 class ReceiveMessage(BaseMessage):
     """docstring for ReceiveMessage"""
 
     def post(self):
         """accept incoming message"""
+        self.store_message(**self.kwargs)
         resp = twiml.Response()
         resp.message('hello world')
         return str(resp)
-
-    def store_post(self):
-        pass
 
 
 class SendMessage(BaseMessage):
