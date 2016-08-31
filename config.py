@@ -22,3 +22,12 @@ class Development(Base):
     ACCOUNT_SID = 'Replace with Account SID'
     AUTH_TOKEN = 'Replace with Auth Token'
     PHONE_NUMBER = 'Replace with Twillio Phone Number'
+
+
+class Production(Base):
+    DEBUG = False
+    SECRET_KEY = 'Replace_With_SecretKey'
+    DATABASE_QUERY_TIMEOUT = 0.5
+    ACCOUNT_SID = 'Replace with Account SID'
+    AUTH_TOKEN = 'Replace with Auth Token'
+    PHONE_NUMBER = 'Replace with Twillio Phone Number'
