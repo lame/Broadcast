@@ -1,5 +1,8 @@
 from app import db
 
+ADMIN_ROLE = 1
+USER_ROLE = 0
+
 
 groups_to_users = db.Table('groups_to_users',
                            db.Column('user_group_id', db.Integer, db.ForeignKey('user_group.id')),
@@ -46,7 +49,7 @@ class UserGroup(Base):
         return cls._find_user_group(id=id, active=active).first()
 
     @classmethod
-    def create_user_group(cls, user_group_name, user=user, active=True):
+    def create_user_group(cls, user_group_name, user, active=True):
         if not isinstance(user, User):
             raise TypeError('user is not of type User')
 
@@ -62,7 +65,7 @@ class UserGroup(Base):
                 db.session.commit()
 
     @classmethod
-    def update_user_group(cls, user_group_name=):
+    def update_user_group(cls, user_group_name=user_group_name):
         pass
 
     @classmethod
@@ -106,22 +109,27 @@ class User(Base):
 
     @classmethod
     def read_user(cls, phone, active=True):
-        cls._find_user(phone=phone, active=active).first()
+        return cls._find_user(phone=phone, active=active).first()
 
     @classmethod
     def create_user(cls, phone, fname=None, lname=None, active=True, role=USER_ROLE):
         if not cls.read_user(phone):
-            db.session.add(cls(phone=phone, fname=fname, lname=lname, active=active, role=role))
+            user = cls(
+                phone=phone,
+                fname=fname,
+                lname=lname,
+                active=active,
+                role=role
+            )
+            db.session.add(user)
             db.session.commit()
 
     @classmethod
     def update_user(cls, user):
-       if not isinstance(user, cls):
+        if not isinstance(user, cls):
             raise TypeError('User.update_user.user needs to be type User')
-        try:
-            db.session.commit(user)
-        except Exception as e:
-            return e
+        db.session.add(user)
+        db.session.commit()
 
     @classmethod
     def delete_user(cls, phone, active=True):

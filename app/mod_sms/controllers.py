@@ -9,8 +9,6 @@ from twilio import twiml, TwilioRestException
 FIRST_CAP_RE = re.compile('(.)([A-Z][a-z]+)')
 ALL_CAP_RE = re.compile('([a-z0-9])([A-Z])')
 
-ADMIN_ROLE = 1
-USER_ROLE = 0
 
 
 class Test(Resource):
@@ -104,6 +102,11 @@ class MessageRequest():
         db.session.add(user_group)
         db.session.add(message)
         db.session.commit()
+
+
+class BaseMessage(Resource):
+    # TODO: For later similar operations of messages
+    pass
 
 
 class ReceiveMessage(BaseMessage):
