@@ -6,12 +6,12 @@ from flask import request
 from flask_restful import Resource, reqparse
 from twilio import twiml, TwilioRestException
 
-
 FIRST_CAP_RE = re.compile('(.)([A-Z][a-z]+)')
 ALL_CAP_RE = re.compile('([a-z0-9])([A-Z])')
 
 ADMIN_ROLE = 1
 USER_ROLE = 0
+
 
 class Test(Resource):
     """Just a test to show API is running"""
@@ -40,11 +40,13 @@ class MessageRequest():
         self.from_zip = kwargs.get('from_zip')
         self.from_country = kwargs.get('from_country')
 
+    # TODO: Move this to a mixin
     @staticmethod
     def convert(name):
         s1 = FIRST_CAP_RE.sub(r'\1_\2', name)
         return ALL_CAP_RE.sub(r'\1_\2', s1).lower()
 
+    # TODO: Move this to a mixin
     @classmethod
     def parse_request(cls):
         message_reqparse = reqparse.RequestParser()
@@ -72,84 +74,6 @@ class MessageRequest():
 
         return {cls.convert(x): y for x, y in message_reqparse.parse_args().items()}
 
-
-class BaseCRUD(object):
-
-    def __init__(self):
-        pass
-
-class UserCRUD(BaseCRUD):
-
-    # FIXME: Move some of these into magic methods
-    # FIXME: Lazy commit
-    @staticmethod
-    def find_user(phone, active=True):
-        return User.query.filter_by(phone=phone, active=active)
-
-    @classmethod
-    def read_user(cls, phone, active=True):
-        cls.find_user(phone=phone, active=active).first()
-
-    @classmethod
-    def create_user(cls, phone, fname=None, lname=None, active=True, role=USER_ROLE):
-        if not cls.read_user(phone):
-            db.session.add(User(phone=phone, fname=fname, lname=lname, active=active, role=role))
-            db.session.commit()
-
-    @classmethod
-    def update_user(cls, phone, group=None, message=None, fname=None, lname=None, active=True, role=USER_ROLE):
-        if group and not isinstance(group, UserGroup):
-            raise TypeError('UserCRUD.update_user.group needs to be type UserGroup')
-        if message and not isinstance(message, Message):
-            raise TypeError('UserCRUD.update_user.message needs to be type Message')
-
-        user = cls.find_user(phone=phone, active=active)
-        user.update(dict(fname=fname, lname=lname, active=active, role=role))
-
-        if group:
-            user.groups_to_user.append(group)
-        if message:
-            user.messages.append(message)
-
-        db.session.commit()
-
-    @classmethod
-    def delete_user(cls, phone, active=True):
-        db.session.delete(cls.read_user(phone=phone, active=active))
-        db.session.commit()
-
-
-class MessageCRUD(BaseCRUD):
-
-    def create_message(self, request):
-        pass
-
-    def read_message(self, reuqest):
-        pass
-
-    def update_message(self, request):
-        pass
-
-    def delete_message(self, request):
-        pass
-
-
-class UserGroupCRUD(BaseCRUD):
-
-    def create_user_group(self, request):
-        pass
-
-    def read_user_group(self, reuqest):
-        pass
-
-    def update_user_group(self, request):
-        pass
-
-    def delete_user_group(self, request):
-        pass
-
-
-class BaseMessage(Resource):
 
     def store_message(self, request):
         if not isinstance(request, MessageRequest):
