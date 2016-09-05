@@ -73,19 +73,29 @@ class MessageRequest():
         return {cls.convert(x): y for x, y in message_reqparse.parse_args().items()}
 
 
-    def store_message(self, request):
+class BaseMessage(Resource):
+    # TODO: For later similar operations of messages
+
+    def __init__(self):
+        # FIXME: This will have to change to a phone number pulled from the db
+        self.twilio_phone_number = app.config.get('TWILIO_PHONE_NUMBER')
+        self.request = MessageRequest()
+
+    def save_message(self, request):
         if not isinstance(request, MessageRequest):
             raise TypeError("store_message requires type MessageRequest")
 
-        import ipdb; ipdb.set_trace()
-        user = User.query.filter_by(phone=request.from_number).first()
+        user = User.read_user(phone=request.from_number)
+        if not user:
+            User.create_user(phone=request.from_number, active=True)
+            user = User(phone=request.from_number)
 
-        user_group = UserGroup.query.filter_by(user_group_name='meet me in the canyons', active=True).first()
+        user_group = UserGroup.read_user_group(user_group_name='meet me in the canyons', active=True).first()
         user_group.users.append(user)
 
-        message = Message(
-            body=request.body,
+        message = Message.create_message(
             sms_message_sid=request.sms_message_sid,
+            body=request.body,
             sms_status=request.sms_status,
             to_number=request.to_number,
             to_zip=request.to_zip,
@@ -104,17 +114,11 @@ class MessageRequest():
         db.session.commit()
 
 
-class BaseMessage(Resource):
-    # TODO: For later similar operations of messages
-    pass
-
-
 class ReceiveMessage(BaseMessage):
     """docstring for ReceiveMessage"""
 
     def post(self):
         """accept incoming message"""
-        self.request = MessageRequest()
         self.store_message(self.request)
         resp = twiml.Response()
         resp.message('hello world')
@@ -124,13 +128,8 @@ class ReceiveMessage(BaseMessage):
 class SendMessage(BaseMessage):
     """docstring for SendMessage"""
 
-    def __init__(self):
-        # FIXME: This will have to change to a phone number pulled from the db
-        self.twilio_phone_number = app.config.get('TWILIO_PHONE_NUMBER')
-
     def post(self):
         """Send message from API"""
-        self.request = MessageRequest()
         try:
             message = tc.messages.create(
                 to=self.request.to_number,

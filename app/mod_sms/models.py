@@ -1,4 +1,5 @@
 from app import db
+from app.mod_sms.custom_errors import DuplicateUserGroupException
 
 ADMIN_ROLE = 1
 USER_ROLE = 0
@@ -35,26 +36,26 @@ class UserGroup(Base):
                                       backref=db.backref('users_in_group', lazy='dynamic'))
     messages = db.relationship('Message', backref='user_group', lazy='dynamic')
 
-    def __init__(self, user_group_name, active=True):
+    def __init__(self, user_group_name, group_admin, active=True):
         self.active = active
-        self.user_group_name = 'meet me in the canyons'
+        self.user_group_name = user_group_name
+        self.group_admin = group_admin
 
 
     @classmethod
-    def _find_user_group(cls, id, active=True):
-        return cls.query.filter_by(id=id, active=active)
+    def _find_user_group(cls, user_group_name, active=True):
+        return cls.query.filter_by(user_group_name=user_group_name, active=active)
 
     @classmethod
-    def read_user_group(cls, id, active):
-        return cls._find_user_group(id=id, active=active).first()
+    def read_user_group(cls, user_group_name, active):
+        return cls._find_user_group(user_group_name=user_group_name, active=active).first()
 
     @classmethod
     def create_user_group(cls, user_group_name, user, active=True):
         if not isinstance(user, User):
             raise TypeError('user is not of type User')
 
-        if not _find_user_group(user_group_name=user_group_name):
-
+        if not cls.read_user_group(user_group_name=user_group_name, active=True):
                 user_group = cls(
                     user_group_name=user_group_name,
                     active=True,
@@ -63,6 +64,10 @@ class UserGroup(Base):
                 user_group.groups_to_users.append(user)
                 db.session.add(user_group)
                 db.session.commit()
+
+        else:
+            raise DuplicateUserGroupException
+
 
     @classmethod
     def update_user_group(cls, user_group_name=user_group_name):
@@ -176,6 +181,7 @@ class Message(Base):
     @classmethod
     def create_message(cls, sms_message_sid, body, sms_status, to_number,
                        to_zip, to_country, from_number, from_zip, from_country):
+
         db.session.add(
             cls(
                 sms_message_sid=sms_message_sid,
