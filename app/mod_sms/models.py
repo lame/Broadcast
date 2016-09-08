@@ -19,6 +19,11 @@ class Base(db.Model):
     date_modified = db.Column(db.DateTime, default=db.func.current_timestamp(),
                               onupdate=db.func.current_timestamp())
 
+    @staticmethod
+    def commit():
+        db.session.commit()
+        return True
+
 
 class UserGroup(Base):
     """
@@ -30,17 +35,18 @@ class UserGroup(Base):
     id = db.Column(db.Integer, primary_key=True)
     active = db.Column(db.Boolean, nullable=False)
     user_group_name = db.Column(db.String(60), unique=True)
+    phone_number = db.Column(db.String(15), nullable=False)
     group_admin = db.Column(db.Integer, nullable=False)
 
     groups_to_users = db.relationship('User', secondary=groups_to_users,
                                       backref=db.backref('users_in_group', lazy='dynamic'))
     messages = db.relationship('Message', backref='user_group', lazy='dynamic')
 
-    def __init__(self, user_group_name, group_admin, active=True):
+    def __init__(self, user_group_name, phone_number, group_admin, active=True):
         self.active = active
         self.user_group_name = user_group_name
+        self.phone_number = phone_number
         self.group_admin = group_admin
-
 
     @classmethod
     def _find_user_group(cls, user_group_name, active=True):
@@ -51,32 +57,42 @@ class UserGroup(Base):
         return cls._find_user_group(user_group_name=user_group_name, active=active).first()
 
     @classmethod
+    def read_users(cls, id):
+        return {user for user in UserGroup.query.filter_by(id=id).first().groups_to_users}
+
+    @classmethod
     def create_user_group(cls, user_group_name, user, active=True):
         if not isinstance(user, User):
             raise TypeError('user is not of type User')
+
+        # TODO: Need to call Twilio for new number here:
+        phone_number = '+17868378095'
 
         if not cls.read_user_group(user_group_name=user_group_name, active=True):
                 user_group = cls(
                     user_group_name=user_group_name,
                     active=True,
+                    phone_number=phone_number,
                     group_admin=user.id,
                 )
                 user_group.groups_to_users.append(user)
                 db.session.add(user_group)
-                db.session.commit()
+                return user_group
 
         else:
             raise DuplicateUserGroupException
 
+    @classmethod
+    def update_user_group(cls, user_group):
+        if not isinstance(user_group, UserGroup):
+            raise TypeError('UserGroup.update_user_group requires type UserGroup')
+
+        db.session.add(user_group)
+        return user_group
 
     @classmethod
-    def update_user_group(cls, user_group_name=user_group_name):
-        pass
-
-    @classmethod
-    def delete_user_group(cls, id):
-        db.session.delete(cls._find_user_group(id=id))
-        db.session.commit()
+    def delete_user_group(cls, user_group_name, active=True):
+        db.session.delete(cls.read_user_group(user_group_name=user_group_name, active=active))
 
 
 class User(Base):
@@ -127,25 +143,25 @@ class User(Base):
                 role=role
             )
             db.session.add(user)
-            db.session.commit()
+            return user
 
     @classmethod
     def update_user(cls, user):
         if not isinstance(user, cls):
             raise TypeError('User.update_user.user needs to be type User')
+
         db.session.add(user)
-        db.session.commit()
+        return user
 
     @classmethod
     def delete_user(cls, phone, active=True):
         db.session.delete(cls.read_user(phone=phone, active=active))
-        db.session.commit()
 
 
 class Message(Base):
     __tablename__ = 'message'
 
-    sms_message_sid = db.Column(db.String(160), nullable=False, primary_key=True)
+    sms_message_sid = db.Column(db.String(160), nullable=False)
     body = db.Column(db.Text, nullable=False)
     sms_status = db.Column(db.String(20), nullable=False)
     to_number = db.Column(db.String(15), nullable=False)
@@ -182,23 +198,20 @@ class Message(Base):
     def create_message(cls, sms_message_sid, body, sms_status, to_number,
                        to_zip, to_country, from_number, from_zip, from_country):
 
-        db.session.add(
-            cls(
-                sms_message_sid=sms_message_sid,
-                body=body,
-                sms_status=sms_status,
-                to_number=to_number,
-                to_zip=to_zip,
-                to_country=to_country,
-                from_number=from_number,
-                from_zip=from_zip,
-                from_country=from_country
-            )
+        message = cls(
+            sms_message_sid=sms_message_sid,
+            body=body,
+            sms_status=sms_status,
+            to_number=to_number,
+            to_zip=to_zip,
+            to_country=to_country,
+            from_number=from_number,
+            from_zip=from_zip,
+            from_country=from_country
         )
-        db.session.commit()
+        db.session.add(message)
+        return message
 
     @classmethod
     def delete_message(cls, sms_message_sid):
         db.session.delete(cls._find_message(sms_message_sid=sms_message_sid))
-        db.session.commit()
-

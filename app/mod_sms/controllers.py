@@ -10,7 +10,6 @@ FIRST_CAP_RE = re.compile('(.)([A-Z][a-z]+)')
 ALL_CAP_RE = re.compile('([a-z0-9])([A-Z])')
 
 
-
 class Test(Resource):
     """Just a test to show API is running"""
 
@@ -90,8 +89,7 @@ class BaseMessage(Resource):
             User.create_user(phone=request.from_number, active=True)
             user = User(phone=request.from_number)
 
-        user_group = UserGroup.read_user_group(user_group_name='meet me in the canyons', active=True).first()
-        user_group.users.append(user)
+        user_group = UserGroup.read_user_group(user_group_name='TestUserGroup', active=True)
 
         message = Message.create_message(
             sms_message_sid=request.sms_message_sid,
@@ -106,27 +104,60 @@ class BaseMessage(Resource):
         )
 
         user.messages.append(message)
-        user_group.messages.append(message)
+        User.update_user(user)
 
-        db.session.add(user)
-        db.session.add(user_group)
-        db.session.add(message)
-        db.session.commit()
+        # user_group.users.append(user)
+        user_group.messages.append(message)
+        UserGroup.update_user_group(user_group)
+
+        # Will commit all updates from all classes
+        UserGroup.commit()
+
+        return user_group, user, message
 
 
 class ReceiveMessage(BaseMessage):
     """docstring for ReceiveMessage"""
 
+    def trigger_group_message(self, user_group, user, message):
+        if not isinstance(user, User):
+            raise('ReceiveMessage.trigger_group_message user requires type User')
+        if not isinstance(user_group, UserGroup):
+            raise('ReceiveMessage.trigger_group_message user_group requires type UserGroup')
+        if not isinstance(message, Message):
+            raise('ReceiveMessage.trigger_group_message message requires type Message')
+        users_to_send = UserGroup.read_users(id=user_group.id)
+        resp = SendMessage.twiml_send_message(user_group=user_group, users=users_to_send, message=message)
+        print(resp)
+
     def post(self):
         """accept incoming message"""
-        self.store_message(self.request)
-        resp = twiml.Response()
-        resp.message('hello world')
-        return str(resp)
+        user_group, user, message = self.save_message(self.request)
+        # TODO: add regex matching for other path than trigger_group_message
+        self.trigger_group_message(user_group=user_group, user=user, message=message)
+        return 200
 
 
 class SendMessage(BaseMessage):
     """docstring for SendMessage"""
+
+    @staticmethod
+    def twiml_send_message(user_group, users, message):
+        while users:
+            user = users.pop()
+            try:
+                message = tc.messages.create(
+                    to=user.phone,
+                    from_=user_group.phone_number,
+                    body=message.body
+                )
+                print(message)
+                yield message, True
+
+            except TwilioRestException as e:
+                yield e
+            except Exception as other_exception:
+                yield other_exception
 
     def post(self):
         """Send message from API"""
