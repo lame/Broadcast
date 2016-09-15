@@ -36,17 +36,16 @@ class UserGroup(Base):
     active = db.Column(db.Boolean, nullable=False)
     user_group_name = db.Column(db.String(60), unique=True)
     phone_number = db.Column(db.String(15), nullable=False)
-    group_admin = db.Column(db.Integer, nullable=False)
-
+    # FIXME: Need to add user group admins later
+    # group_admin = db.Column(db.Integer, db.ForeignKey('user.id'))
     groups_to_users = db.relationship('User', secondary=groups_to_users,
                                       backref=db.backref('users_in_group', lazy='dynamic'))
     messages = db.relationship('Message', backref='user_group', lazy='dynamic')
 
-    def __init__(self, user_group_name, phone_number, group_admin, active=True):
+    def __init__(self, user_group_name, phone_number, active=True):
         self.active = active
         self.user_group_name = user_group_name
         self.phone_number = phone_number
-        self.group_admin = group_admin
 
     @classmethod
     def _find_user_group(cls, user_group_name, active=True):
@@ -73,7 +72,6 @@ class UserGroup(Base):
                     user_group_name=user_group_name,
                     active=True,
                     phone_number=phone_number,
-                    group_admin=user.id,
                 )
                 user_group.groups_to_users.append(user)
                 db.session.add(user_group)
@@ -109,8 +107,8 @@ class User(Base):
 
     # Authorisation Data: role & status
     active = db.Column(db.Boolean, nullable=False)
-    role = db.Column(db.SmallInteger, nullable=False)
-
+    # FIXME: Need to add user groups
+    # admin = db.relationship('UserGroup', backref='user', lazy='dynamic')
     users_groups = db.relationship('UserGroup', secondary=groups_to_users,
                                    backref=db.backref('groups_of_user', lazy=True))
     messages = db.relationship('Message', backref='user', lazy='dynamic')
@@ -161,6 +159,7 @@ class User(Base):
 class Message(Base):
     __tablename__ = 'message'
 
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
     sms_message_sid = db.Column(db.String(160), nullable=False)
     body = db.Column(db.Text, nullable=False)
     sms_status = db.Column(db.String(20), nullable=False)

@@ -2,7 +2,7 @@ import re
 
 from app import app, tc, db
 from app.mod_sms.models import UserGroup, User, Message
-from flask import request
+from flask import request, make_response
 from flask_restful import Resource, reqparse
 from twilio import twiml, TwilioRestException
 
@@ -89,7 +89,7 @@ class BaseMessage(Resource):
             User.create_user(phone=request.from_number, active=True)
             user = User(phone=request.from_number)
 
-        user_group = UserGroup.read_user_group(user_group_name='TestUserGroup', active=True)
+        user_group = UserGroup.read_user_group(user_group_name='Canyon Time', active=True)
 
         message = Message.create_message(
             sms_message_sid=request.sms_message_sid,
@@ -102,6 +102,11 @@ class BaseMessage(Resource):
             from_zip=request.from_zip,
             from_country=request.from_country
         )
+
+        db.session.add(message)
+        db.session.commit()
+
+        message = Message.read_message(request.sms_message_sid)
 
         user.messages.append(message)
         User.update_user(user)
@@ -135,7 +140,6 @@ class ReceiveMessage(BaseMessage):
         user_group, user, message = self.save_message(self.request)
         # TODO: add regex matching for other path than trigger_group_message
         self.trigger_group_message(user_group=user_group, user=user, message=message)
-        return 200
 
 
 class SendMessage(BaseMessage):
@@ -151,13 +155,12 @@ class SendMessage(BaseMessage):
                     from_=user_group.phone_number,
                     body=message.body
                 )
-                print(message)
-                yield message, True
+                yield message
 
             except TwilioRestException as e:
-                yield e
+                print(e)
             except Exception as other_exception:
-                yield other_exception
+                print(other_exception)
 
     def post(self):
         """Send message from API"""
@@ -167,7 +170,9 @@ class SendMessage(BaseMessage):
                 from_=self.twilio_phone_number,
                 body=self.request.body
             )
-            return 200
+            response = make_response(str(message))
+            response.headers['content-type'] = 'text/plain'
+            return str(message)
 
         except TwilioRestException as e:
             print(e)
