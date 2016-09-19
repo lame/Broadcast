@@ -2,9 +2,11 @@ import re
 
 from app import app, tc, db
 from app.mod_sms.models import UserGroup, User, Message
+from app.mod_sms.views import (base_message, welcome_1, welcome_2,
+                               confirm_welcome_2, opt_out)
 from flask import request, make_response
 from flask_restful import Resource, reqparse
-from twilio import twiml, TwilioRestException
+from twilio import TwilioRestException
 
 FIRST_CAP_RE = re.compile('(.)([A-Z][a-z]+)')
 ALL_CAP_RE = re.compile('([a-z0-9])([A-Z])')
@@ -103,11 +105,6 @@ class BaseMessage(Resource):
             from_country=request.from_country
         )
 
-        db.session.add(message)
-        db.session.commit()
-
-        message = Message.read_message(request.sms_message_sid)
-
         user.messages.append(message)
         User.update_user(user)
 
@@ -116,7 +113,7 @@ class BaseMessage(Resource):
         UserGroup.update_user_group(user_group)
 
         # Will commit all updates from all classes
-        UserGroup.commit()
+        db.session.commit()
 
         return user_group, user, message
 
@@ -131,8 +128,8 @@ class ReceiveMessage(BaseMessage):
             raise('ReceiveMessage.trigger_group_message user_group requires type UserGroup')
         if not isinstance(message, Message):
             raise('ReceiveMessage.trigger_group_message message requires type Message')
-        users_to_send = UserGroup.read_users(id=user_group.id)
-        resp = SendMessage.twiml_send_message(user_group=user_group, users=users_to_send, message=message)
+        users_to_send = UserGroup.read_users(id=user_group.id).discard(user)
+        resp = SendMessage.twiml_send_message(user_group=user_group, users=users_to_send, message=message, template=base_message)
         print(resp)
 
     def post(self):
@@ -146,9 +143,10 @@ class SendMessage(BaseMessage):
     """docstring for SendMessage"""
 
     @staticmethod
-    def twiml_send_message(user_group, users, message):
+    def twiml_send_message(user_group, users, message, template):
         while users:
             user = users.pop()
+
             try:
                 message = tc.messages.create(
                     to=user.phone,
