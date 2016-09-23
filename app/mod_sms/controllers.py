@@ -118,19 +118,22 @@ class BaseMessage(Resource):
         return user_group, user, message
 
 
-class ReceiveMessage(BaseMessage):
-    """docstring for ReceiveMessage"""
+class InboundMessage(BaseMessage):
+    """docstring for InboundMessage"""
 
     def trigger_group_message(self, user_group, user, message):
         if not isinstance(user, User):
-            raise('ReceiveMessage.trigger_group_message user requires type User')
+            raise('InboundMessage.trigger_group_message user requires type User')
         if not isinstance(user_group, UserGroup):
-            raise('ReceiveMessage.trigger_group_message user_group requires type UserGroup')
+            raise('InboundMessage.trigger_group_message user_group requires type UserGroup')
         if not isinstance(message, Message):
-            raise('ReceiveMessage.trigger_group_message message requires type Message')
-        users_to_send = UserGroup.read_users(id=user_group.id).discard(user)
-        resp = SendMessage.twiml_send_message(user_group=user_group, users=users_to_send, message=message, template=base_message)
-        print(resp)
+            raise('InboundMessage.trigger_group_message message requires type Message')
+        users_to_send = UserGroup.read_users(id=user_group.id)
+        users_to_send.discard(user)
+
+        resp = OutboundMessage.twiml_send_message(user_group=user_group, users=users_to_send,
+                                                  sent_from_user=user, message=message,
+                                                  template=base_message)
 
     def post(self):
         """accept incoming message"""
@@ -139,22 +142,28 @@ class ReceiveMessage(BaseMessage):
         self.trigger_group_message(user_group=user_group, user=user, message=message)
 
 
-class SendMessage(BaseMessage):
-    """docstring for SendMessage"""
+class OutboundMessage(BaseMessage):
+    """docstring for OutboundMessage"""
 
     @staticmethod
-    def twiml_send_message(user_group, users, message, template):
+    def twiml_send_message(user_group, users, sent_from_user, message, template):
         while users:
             user = users.pop()
-
+            formatted_message = template(
+                **dict(
+                    user=user,
+                    fname=sent_from_user.fname,
+                    lname=sent_from_user.lname,
+                    body=message.body,
+                )
+            )
             try:
-                message = tc.messages.create(
+                outbound_message = tc.messages.create(
                     to=user.phone,
                     from_=user_group.phone_number,
-                    body=message.body
+                    body=formatted_message
                 )
-                yield message
-
+                print(str(outbound_message))
             except TwilioRestException as e:
                 print(e)
             except Exception as other_exception:

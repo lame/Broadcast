@@ -1,8 +1,8 @@
-def base_message(body, fname, lname):
+def base_message(**kwargs):
     resp = '''
     {body}\n
     from: {fname} {lname}
-    '''
+    '''.format(body=kwargs.get('body'), fname=kwargs.get('fname'), lname=kwargs.get('lname'))
     return resp
 
 

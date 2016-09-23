@@ -1,12 +1,12 @@
 from app import api
-from app.mod_sms.controllers import(
+from app.mod_sms.controllers import (
     Test,
-    ReceiveMessage,
-    SendMessage,
+    InboundMessage,
+    OutboundMessage,
     Group,
 )
 
 api.add_resource(Test, '/')
-api.add_resource(SendMessage, '/send')
-api.add_resource(ReceiveMessage, '/receive')
+api.add_resource(OutboundMessage, '/outbound')
+api.add_resource(InboundMessage, '/inbound')
 api.add_resource(Group, '/group')
