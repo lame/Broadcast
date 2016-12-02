@@ -1,0 +1,9 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  active: false
+  user_group_name: MyString
+
+two:
+  active: false
+  user_group_name: MyString

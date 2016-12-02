@@ -1,8 +1,0 @@
-general:
-    build_dir: tests
-
-machine:
-    python:
-        version: 3.5.2
-    services:
-        - docker

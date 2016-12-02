@@ -1,0 +1,54 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <strong>Id:</strong>
+  <%= @message.id %>
+</p>
+
+<p>
+  <strong>Message sid:</strong>
+  <%= @message.message_sid %>
+</p>
+
+<p>
+  <strong>Body:</strong>
+  <%= @message.body %>
+</p>
+
+<p>
+  <strong>Status:</strong>
+  <%= @message.status %>
+</p>
+
+<p>
+  <strong>To number:</strong>
+  <%= @message.to_number %>
+</p>
+
+<p>
+  <strong>To zip:</strong>
+  <%= @message.to_zip %>
+</p>
+
+<p>
+  <strong>To country:</strong>
+  <%= @message.to_country %>
+</p>
+
+<p>
+  <strong>From number:</strong>
+  <%= @message.from_number %>
+</p>
+
+<p>
+  <strong>From zip:</strong>
+  <%= @message.from_zip %>
+</p>
+
+<p>
+  <strong>From country:</strong>
+  <%= @message.from_country %>
+</p>
+
+<%= link_to 'Edit', edit_message_path(@message) %> |
+<%= link_to 'Back', messages_path %>

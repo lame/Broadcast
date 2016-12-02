@@ -1,0 +1,2 @@
+json.extract! message, :id, :id, :message_sid, :body, :status, :to_number, :to_zip, :to_country, :from_number, :from_zip, :from_country, :created_at, :updated_at
+json.url message_url(message, format: :json)

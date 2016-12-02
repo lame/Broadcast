@@ -1,0 +1,17 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  fname: MyString
+  lname: MyString
+  phone: MyString
+  current_channels_increment: 1
+  active: false
+  role: 1
+
+two:
+  fname: MyString
+  lname: MyString
+  phone: MyString
+  current_channels_increment: 1
+  active: false
+  role: 1

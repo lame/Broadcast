@@ -1,0 +1,29 @@
+<p id="notice"><%= notice %></p>
+
+<h1>User Groups</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Active</th>
+      <th>User group name</th>
+      <th colspan="3"></th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <% @user_groups.each do |user_group| %>
+      <tr>
+        <td><%= user_group.active %></td>
+        <td><%= user_group.user_group_name %></td>
+        <td><%= link_to 'Show', user_group %></td>
+        <td><%= link_to 'Edit', edit_user_group_path(user_group) %></td>
+        <td><%= link_to 'Destroy', user_group, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<br>
+
+<%= link_to 'New User Group', new_user_group_path %>

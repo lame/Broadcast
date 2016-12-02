@@ -1,0 +1,27 @@
+<%= form_for(phone_number) do |f| %>
+  <% if phone_number.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(phone_number.errors.count, "error") %> prohibited this phone_number from being saved:</h2>
+
+      <ul>
+      <% phone_number.errors.full_messages.each do |message| %>
+        <li><%= message %></li>
+      <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <%= f.label :phone_number %>
+    <%= f.text_field :phone_number %>
+  </div>
+
+  <div class="field">
+    <%= f.label :active %>
+    <%= f.check_box :active %>
+  </div>
+
+  <div class="actions">
+    <%= f.submit %>
+  </div>
+<% end %>

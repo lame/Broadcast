@@ -1,0 +1,67 @@
+<%= form_for(message) do |f| %>
+  <% if message.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(message.errors.count, "error") %> prohibited this message from being saved:</h2>
+
+      <ul>
+      <% message.errors.full_messages.each do |message| %>
+        <li><%= message %></li>
+      <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <%= f.label :id %>
+    <%= f.number_field :id %>
+  </div>
+
+  <div class="field">
+    <%= f.label :message_sid %>
+    <%= f.text_field :message_sid %>
+  </div>
+
+  <div class="field">
+    <%= f.label :body %>
+    <%= f.text_field :body %>
+  </div>
+
+  <div class="field">
+    <%= f.label :status %>
+    <%= f.number_field :status %>
+  </div>
+
+  <div class="field">
+    <%= f.label :to_number %>
+    <%= f.text_field :to_number %>
+  </div>
+
+  <div class="field">
+    <%= f.label :to_zip %>
+    <%= f.number_field :to_zip %>
+  </div>
+
+  <div class="field">
+    <%= f.label :to_country %>
+    <%= f.text_field :to_country %>
+  </div>
+
+  <div class="field">
+    <%= f.label :from_number %>
+    <%= f.text_field :from_number %>
+  </div>
+
+  <div class="field">
+    <%= f.label :from_zip %>
+    <%= f.number_field :from_zip %>
+  </div>
+
+  <div class="field">
+    <%= f.label :from_country %>
+    <%= f.text_field :from_country %>
+  </div>
+
+  <div class="actions">
+    <%= f.submit %>
+  </div>
+<% end %>
