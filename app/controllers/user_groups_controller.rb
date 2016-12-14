@@ -1,3 +1,5 @@
+require 'pry'
+
 class UserGroupsController < ApplicationController
   before_action :set_user_group, only: [:show, :edit, :update, :destroy]
 
@@ -27,6 +29,7 @@ class UserGroupsController < ApplicationController
     @user_group = UserGroup.new(user_group_params)
 
     respond_to do |format|
+      binding.pry
       if @user_group.save
         format.html { redirect_to @user_group, notice: 'User group was successfully created.' }
         format.json { render :show, status: :created, location: @user_group }
