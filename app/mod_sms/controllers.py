@@ -158,12 +158,12 @@ class OutboundMessage(BaseMessage):
                 )
             )
             try:
-                outbound_message = tc.messages.create(
+                _ = tc.messages.create(
                     to=user.phone,
                     from_=user_group.phone_number,
-                    body=formatted_message
+                    body=formatted_message,
+                    # media_url=
                 )
-                print(str(outbound_message))
             except TwilioRestException as e:
                 print(e)
             except Exception as other_exception:
@@ -177,10 +177,6 @@ class OutboundMessage(BaseMessage):
                 from_=self.twilio_phone_number,
                 body=self.request.body
             )
-            response = make_response(str(message))
-            response.headers['content-type'] = 'text/plain'
-            return str(message)
-
         except TwilioRestException as e:
             print(e)
             return 400
