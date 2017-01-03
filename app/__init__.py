@@ -1,3 +1,5 @@
+import os
+
 from configparser import SafeConfigParser
 from flask import Flask
 from flask_restful import Api
@@ -5,23 +7,15 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from twilio.rest import TwilioRestClient
 
+try:
+  ENV = os.environ['BROADCAST_ENV']
+  ENV in ('STAGING', 'PRODUCTION')
+except:
+  raise EnvironmentError('Environmental variable "BROADCAST_ENV" not found or unrecognized value')
 
 app = Flask(__name__)
-env = 'PRODUCTION'
-
-app.config.from_object('config.Development')
+app.config.from_object('config.' + ENV)
 parser = SafeConfigParser()
-
-# FIXME: This needs to read off dev machine by user acct
-parser.read('instances/kuhlryan.cfg')
-
-# FIXME: Needs to pull config based on env var
-app.config.update(
-    TWILIO_PHONE_NUMBER=parser.get(env, 'TWILIO_PHONE_NUMBER'),
-    TWILIO_ACCOUNT_SID=parser.get(env, 'TWILIO_ACCOUNT_SID'),
-    TWILIO_ACCOUNT_AUTH=parser.get(env, 'TWILIO_ACCOUNT_AUTH'),
-)
-
 api = Api(app)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
