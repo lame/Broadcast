@@ -2,6 +2,7 @@ alembic==0.8.7
 aniso8601==1.1.0
 appnope==0.1.0
 click==6.6
+configparser==3.5.0
 decorator==4.0.10
 Flask==0.11.1
 Flask-Migrate==2.0.0
