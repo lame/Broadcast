@@ -7,18 +7,19 @@ class Base(object):
     CSRF_ENABLED = True
     DEBUG = False
     ENV = os.environ['BROADCAST_ENV']
-    SECRET_KEY = os.environ.get('SECRET_KEY', '')
 
     # SQLAlchemy Config
-    if not os.environ.get('DATABASE_URL'):
-        SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'app.db')
-    else:
-        SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']
-
     DATABASE_QUERY_TIMEOUT = 0.5
     SQLALCHEMY_MIGRATE_REPO = os.path.join(basedir, 'db_repository')
     SQLALCHEMY_RECORD_QUERIES = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_DATABASE_URI = '{db_type}://{username}:{password}@{db_url}/{db_name}'.format(
+        db_type='postgresql',
+        username=os.environ['DATABASE_USER_' + ENV],
+        password=os.environ['DATABASE_PASSWORD_' + ENV],
+        db_url=os.environ['DATABASE_URL_' + ENV],
+        db_name=os.environ['DATABASE_NAME_' + ENV]
+    )
 
     # TWILIO Config
     try:
@@ -32,5 +33,6 @@ class STAGING(Base):
     SECRET_KEY = 'Replace_With_SecretKey'
     DATABASE_QUERY_TIMEOUT = 1.0
 
+
 class PRODUCTION(Base):
-    pass
+    SECRET_KEY = os.environ.get('SECRET_KEY', '')
