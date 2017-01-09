@@ -7,13 +7,15 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from twilio.rest import TwilioRestClient
 
+app = Flask(__name__)
+
+# ENV Vars
 try:
-  ENV = os.environ['BROADCAST_ENV']
+  ENV = os.environ['ENV']
   ENV in ('STAGING', 'PRODUCTION')
 except:
   raise EnvironmentError('Environmental variable "BROADCAST_ENV" not found or unrecognized value')
 
-app = Flask(__name__)
 app.config.from_object('config.' + ENV)
 parser = SafeConfigParser()
 api = Api(app)
