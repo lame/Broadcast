@@ -4,13 +4,13 @@ import os
 class Base(object):
 
     # Flask Config
-    basedir = os.path.abspath(os.path.dirname(__file__))
+    BASEDIR = os.path.abspath(os.path.dirname(__file__))
     CSRF_ENABLED = True
     DEBUG = False
 
     # SQLAlchemy Config
     DATABASE_QUERY_TIMEOUT = 0.5
-    SQLALCHEMY_MIGRATE_REPO = os.path.join(basedir, 'db_repository')
+    SQLALCHEMY_MIGRATE_REPO = os.path.join(BASEDIR, 'db_repository')
     SQLALCHEMY_RECORD_QUERIES = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']
