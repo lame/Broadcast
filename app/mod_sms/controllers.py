@@ -71,7 +71,7 @@ class MessageRequest():
             message_reqparse.add_argument('To', type=str, required=True, help='to_phone_number not provided', location='json')
             message_reqparse.add_argument('Body', type=str, required=False, location='json')
 
-        return {cls.convert(x): y for x, y in message_reqparse.parse_args().items()}
+        return {cls.convert(x): y.strip() for x, y in message_reqparse.parse_args().items()}
 
 
 class BaseMessage(Resource):
@@ -86,10 +86,12 @@ class BaseMessage(Resource):
         if not isinstance(request, MessageRequest):
             raise TypeError("store_message requires type MessageRequest")
 
-        user = User.read_user(phone=request.from_number)
-        if not user:
+        if request.from_number[:1] != '+':
+            request.from_number = '+' + request.from_number
+        request_user = User.read_user(phone=request.from_number)
+        if not request_user:
             User.create_user(phone=request.from_number, active=True)
-            user = User(phone=request.from_number)
+            request_user = User(phone=request.from_number)
 
         user_group = UserGroup.read_user_group(user_group_name='Canyon Time', active=True)
 
@@ -105,17 +107,13 @@ class BaseMessage(Resource):
             from_country=request.from_country
         )
 
-        user.messages.append(message)
-        User.update_user(user)
-
-        # user_group.users.append(user)
+        request_user.messages.append(message)
         user_group.messages.append(message)
-        UserGroup.update_user_group(user_group)
-
         # Will commit all updates from all classes
+        db.session.add(request_user, user_group)
         db.session.commit()
 
-        return user_group, user, message
+        return user_group, request_user, message
 
 
 class InboundMessage(BaseMessage):
