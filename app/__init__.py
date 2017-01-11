@@ -26,4 +26,5 @@ tc = TwilioRestClient(
     app.config.get('TWILIO_ACCOUNT_AUTH')
 )
 
+# FIXME
 from app.mod_sms import views, models, controllers, routes

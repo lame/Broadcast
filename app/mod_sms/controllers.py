@@ -4,7 +4,7 @@ from app import app, tc, db
 from app.mod_sms.models import UserGroup, User, Message
 from app.mod_sms.views import (base_message, welcome_1, welcome_2,
                                confirm_welcome_2, opt_out)
-from flask import request, make_response
+from flask import request, Response
 from flask_restful import Resource, reqparse
 from twilio import TwilioRestException
 
@@ -132,6 +132,9 @@ class InboundMessage(BaseMessage):
         resp = OutboundMessage.twiml_send_message(user_group=user_group, users=users_to_send,
                                                   sent_from_user=user, message=message,
                                                   template=base_message)
+
+        return Response(mimetype='text/xml')
+
 
     def post(self):
         """accept incoming message"""
