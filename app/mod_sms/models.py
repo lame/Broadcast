@@ -49,14 +49,18 @@ class UserGroup(Base):
         self.phone_number = phone_number
 
     def show(self):
-        ug = self.query.filter_by(user_group_name=self.user_group_name, active=self.active)
+        ug = self.query.filter_by(id = self.id, active=self.active,
+                                  user_group_name=self.user_group_name,
+                                  phone_number=self.phone_number)
         return ug.first()
 
     def update(self):
         db.session.add(self)
+        return self
 
     def destroy(self):
         db.session.delete(self)
+        return self
 
     # FIXME: Need to call Twilio for new number here:
     # def create(self):
@@ -68,6 +72,10 @@ class UserGroup(Base):
 
     def show_users(self):
         return {user for user in self.query.filter_by(id=self.id).first().groups_to_users if user.active}
+
+    def append_message(self, message):
+        self.messages.append(message)
+        db.session.add(self)
 
 
 class User(Base):
@@ -103,19 +111,31 @@ class User(Base):
             db.session.add(self)
         else:
             raise DuplicateUserException
+        return self
 
     def show(self):
         user = self.query.filter_by(phone=self.phone, active=self.active)
-        return user.first()
+        if user.first():
+            return user.first()
+        #FIXME: Need to send the new user into new user flow
+        return self.create()
 
     def edit(self):
         db.session.add(self)
+        return self
 
     def update(self):
         db.session.add(self)
+        return self
 
     def destroy(self, phone, active=True):
         db.session.delete(self)
+        return self
+
+    def append_message(self, message):
+        self.messages.append(message)
+        db.session.add(self)
+
 
 
 class Message(Base):
@@ -152,16 +172,20 @@ class Message(Base):
             db.session.add(self)
         else:
             raise DuplicateMessageException
+        return self
 
     def show(self):
         message = self.query.filter_by(sms_message_sid=sms_message_sid)
-        return cls._find_message(sms_message_sid).first()
+        return message.first()
 
     def edit(self):
         db.session.add(self)
+        return self
 
     def update(self):
         db.session.add(self)
+        return self
 
     def destroy(self):
         db.session.delete(self)
+        return self
