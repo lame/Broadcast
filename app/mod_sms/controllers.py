@@ -65,14 +65,12 @@ class OutboundMessage(BaseMessage):
         users_to_send.discard(user)
 
         while users:
-            popped_user = users.pop()
-            self.post(user_group=user_group, users=popped_user,
-                                    sent_from_user=user, message=message, template=template)
+            self.post(user_group=user_group, users=users.pop(), sent_from_user=user, body=template)
 
         return Response(mimetype='text/xml')
 
     @staticmethod
-    def post(user_group, users, sent_from_user, message, template):
+    def post(user_group, users, sent_from_user, body):
         try:
             tc.messages.create(
                 to=user.phone,
