@@ -3,9 +3,9 @@ from flask_restful import Resource, reqparse
 from twilio import TwilioRestException
 
 from app import app, tc, db
-from app.adapters import MessageRequest
+from app.mod_sms.adapters import MessageRequest
 from app.mod_sms.models import UserGroup, User, Message
-from app.template import base_message
+from app.templates import base_message
 
 
 class Test(Resource):
