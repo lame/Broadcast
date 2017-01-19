@@ -5,7 +5,7 @@ from twilio import TwilioRestException
 from app import app, tc, db
 from app.mod_sms.adapters import MessageRequest
 from app.mod_sms.models import UserGroup, User, Message
-from app.templates import base_message
+from app.mod_templates import base_message
 
 
 class Test(Resource):
