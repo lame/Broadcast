@@ -1,5 +1,5 @@
 from flask import request, Response
-from flask_restful import Resource, reqparse
+from flask_restful import Resource
 from twilio import TwilioRestException
 
 from app import app, tc, db
@@ -18,27 +18,25 @@ class Test(Resource):
 class BaseMessage(Resource, MessageRequest):
     """docstring for BaseMessage"""
 
-    def __init__(self):
-        # FIXME: This will have to change to a phone number pulled from the db
-        self.twilio_phone_number = app.config.get('TWILIO_PHONE_NUMBER')
-
-    def save_message(self):
+    @staticmethod
+    def save_message(parsed_request):
         # Phone number format validation
         message = Message(
-            sms_message_sid=self.sms_message_sid,
-            body=self.body,
-            sms_status=self.sms_status,
-            to_number=self.to_number,
-            to_zip=self.to_zip,
-            to_country=self.to_country,
-            from_number=self.from_number,
-            from_zip=self.from_zip,
-            from_country=self.from_country
+            sms_message_sid=parsed_request.sms_message_sid,
+            body=parsed_request.body,
+            sms_status=parsed_request.sms_status,
+            to_number=parsed_request.to_number,
+            to_zip=parsed_request.to_zip,
+            to_country=parsed_request.to_country,
+            from_number=parsed_request.from_number,
+            from_zip=parsed_request.from_zip,
+            from_country=parsed_request.from_country
         ).create()
 
-        user = User(phone=self.request.from_number).show()
+        user = User(phone=parsed_request.from_number).show()
         user.append_message(message)
 
+        # FIXME: this is a hack
         user_group = UserGroup(user_group_name='Canyon Time', active=True).show()
         user_group.append_message(message)
 
@@ -51,7 +49,7 @@ class InboundMessage(BaseMessage):
     """docstring for InboundMessage"""
 
     def post(self):
-        user_group, user, message = self.save_message(self.request)
+        user_group, user, message = self.save_message(self.request())
         template = base_message(message=message, user=user, user_group=user_group)
         # TODO: add regex matching for other path than trigger_group_message
         OutboundMessage.trigger_group_message(user_group=user_group, user=user, message=message)

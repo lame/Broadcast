@@ -1,5 +1,9 @@
 import re
 
+from flask import request
+from flask_restful import reqparse
+
+
 FIRST_CAP_RE = re.compile('(.)([A-Z][a-z]+)')
 ALL_CAP_RE = re.compile('([a-z0-9])([A-Z])')
 
@@ -24,7 +28,10 @@ class MessageRequest(object):
         self.from_country = kwargs.get('from_country')
 
         if self.from_number[:1] != '+':
-            self.from_number = '+' + self.request.from_number
+            self.from_number = '+' + self.from_number
+
+    def request(self):
+        return self
 
     # TODO: Move this to a mixin
     @staticmethod

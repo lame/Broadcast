@@ -175,7 +175,7 @@ class Message(Base):
         return self
 
     def show(self):
-        message = self.query.filter_by(sms_message_sid=sms_message_sid)
+        message = self.query.filter_by(sms_message_sid=self.sms_message_sid)
         return message.first()
 
     def edit(self):
