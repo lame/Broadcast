@@ -43,15 +43,16 @@ class UserGroup(Base):
     groups_to_users = db.relationship('User', secondary=groups_to_users,
                                       backref=db.backref('users_in_group', lazy='dynamic'))
 
-    def __init__(self, user_group_name, phone_number=None, active=True):
+    def __init__(self, phone_number, user_group_name=None, active=True):
         self.active = active
         self.user_group_name = user_group_name
         self.phone_number = phone_number
 
     def show(self):
-        ug = self.query.filter_by(id = self.id, active=self.active,
-                                  user_group_name=self.user_group_name,
-                                  phone_number=self.phone_number)
+        if self.id:
+            ug = self.query.filter_by(id = self.id)
+        else:
+            ug = self.query.filter_by(active=self.active, phone_number=self.phone_number)
         return ug.first()
 
     def update(self):

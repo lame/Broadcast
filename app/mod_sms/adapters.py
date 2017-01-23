@@ -15,20 +15,17 @@ class MessageRequest(object):
         self.sms_message_sid = kwargs.get('sms_message_sid')
         self.body = kwargs.get('body')
 
-        self.to_number = kwargs.get('to')
+        self.to_number = self.validate_phone_numbers(kwargs.get('to'))
         self.to_city = kwargs.get('to_city')
         self.to_state = kwargs.get('to_state')
         self.to_zip = kwargs.get('to_zip')
         self.to_country = kwargs.get('to_country')
 
-        self.from_number = kwargs.get('from')
+        self.from_number = self.validate_phone_numbers(kwargs.get('from'))
         self.from_city = kwargs.get('from_city')
         self.from_state = kwargs.get('from_state')
         self.from_zip = kwargs.get('from_zip')
         self.from_country = kwargs.get('from_country')
-
-        if self.from_number[:1] != '+':
-            self.from_number = '+' + self.from_number
 
     def request(self):
         return self
@@ -38,6 +35,12 @@ class MessageRequest(object):
     def convert(name):
         s1 = FIRST_CAP_RE.sub(r'\1_\2', name)
         return ALL_CAP_RE.sub(r'\1_\2', s1).lower()
+
+    @staticmethod
+    def validate_phone_numbers(phone_number):
+        if phone_number[:1] != '+':
+            phone_number = '+' + phone_number
+        return phone_number
 
     def parse_request(self):
         message_reqparse = reqparse.RequestParser()

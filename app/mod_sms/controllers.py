@@ -36,13 +36,12 @@ class BaseMessage(Resource, MessageRequest):
         user = User(phone=parsed_request.from_number).show()
         user.append_message(message)
 
-        # FIXME: this is a hack
-        user_group = UserGroup(user_group_name='Canyon Time', active=True).show()
+        user_group = UserGroup(phone_number=parsed_request.to_number, active=True).show()
         user_group.append_message(message)
 
         message.commit()
 
-        return user_group, request_user, message
+        return user_group, user, message
 
 
 class InboundMessage(BaseMessage):
@@ -50,33 +49,35 @@ class InboundMessage(BaseMessage):
 
     def post(self):
         user_group, user, message = self.save_message(self.request())
-        template = base_message(message=message, user=user, user_group=user_group)
+        body = base_message(message=message, user=user, user_group=user_group)
         # TODO: add regex matching for other path than trigger_group_message
-        OutboundMessage.trigger_group_message(user_group=user_group, user=user, message=message)
+        OutboundMessage.trigger_group_message(user_group=user_group, user=user, body=body)
 
 
 class OutboundMessage(BaseMessage):
     """docstring for OutboundMessage"""
 
-    def trigger_group_message(self, user_group, user, message, template):
-        users_to_send = user_group.show_users()
-        users_to_send.discard(user)
+    @classmethod
+    def trigger_group_message(cls, user_group, user, body):
+        users = user_group.show_users()
+        users.discard(user)
 
         while users:
-            self.post(user_group=user_group, users=users.pop(), sent_from_user=user, body=template)
+            cls.post(user_group=user_group, to_user=users.pop(), sent_from_user=user, body=body)
 
         return Response(mimetype='text/xml')
 
     @staticmethod
-    def post(user_group, users, sent_from_user, body):
-        try:
-            tc.messages.create(
-                to=user.phone,
-                from_=user_group.phone_number,
-                body=template,
-                # media_url=
-            )
-        except TwilioRestException as e:
-            print(e)
-        except Exception as other_exception:
-            print(other_exception)
+    def post(user_group, to_users, from_user, body):
+        if to_user.active:
+            try:
+                tc.messages.create(
+                    to=user.phone,
+                    from_=user_group.phone_number,
+                    body=body,
+                    # media_url=
+                )
+            except TwilioRestException as e:
+                print(e)
+            except Exception as other_exception:
+                print(other_exception)
