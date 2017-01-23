@@ -1,14 +1,15 @@
 from app import db
-from app.mod_sms.custom_errors import DuplicateUserGroupException
+from app.mod_sms.custom_errors import DuplicateUserGroupException, \
+    DuplicateUserException, DuplicateMessageException
 
 ADMIN_ROLE = 1
 USER_ROLE = 0
 
 
-groups_to_users = db.Table('groups_to_users',
-                           db.Column('user_group_id', db.Integer, db.ForeignKey('user_group.id')),
-                           db.Column('user_id', db.Integer, db.ForeignKey('user.id'))
-                           )
+groups_to_users = db.Table(
+    'groups_to_users',
+    db.Column('user_group_id', db.Integer, db.ForeignKey('user_group.id')),
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id')))
 
 
 class Base(db.Model):
@@ -22,7 +23,6 @@ class Base(db.Model):
     @staticmethod
     def commit():
         db.session.commit()
-        return True
 
 
 class UserGroup(Base):
@@ -38,59 +38,45 @@ class UserGroup(Base):
     phone_number = db.Column(db.String(15), nullable=False)
     # FIXME: Need to add user group admins later
     # group_admin = db.Column(db.Integer, db.ForeignKey('user.id'))
+
+    messages = db.relationship('Message', backref='user_group', lazy='dynamic')
     groups_to_users = db.relationship('User', secondary=groups_to_users,
                                       backref=db.backref('users_in_group', lazy='dynamic'))
-    messages = db.relationship('Message', backref='user_group', lazy='dynamic')
 
-    def __init__(self, user_group_name, phone_number, active=True):
+    def __init__(self, phone_number, user_group_name=None, active=True):
         self.active = active
         self.user_group_name = user_group_name
         self.phone_number = phone_number
 
-    @classmethod
-    def _find_user_group(cls, user_group_name, active=True):
-        return cls.query.filter_by(user_group_name=user_group_name, active=active)
-
-    @classmethod
-    def read_user_group(cls, user_group_name, active):
-        return cls._find_user_group(user_group_name=user_group_name, active=active).first()
-
-    @classmethod
-    def read_users(cls, id):
-        return {user for user in UserGroup.query.filter_by(id=id).first().groups_to_users}
-
-    @classmethod
-    def create_user_group(cls, user_group_name, user, active=True):
-        if not isinstance(user, User):
-            raise TypeError('user is not of type User')
-
-        # TODO: Need to call Twilio for new number here:
-        phone_number = '+17868378095'
-
-        if not cls.read_user_group(user_group_name=user_group_name, active=True):
-                user_group = cls(
-                    user_group_name=user_group_name,
-                    active=True,
-                    phone_number=phone_number,
-                )
-                user_group.groups_to_users.append(user)
-                db.session.add(user_group)
-                return user_group
-
+    def show(self):
+        if self.id:
+            ug = self.query.filter_by(id = self.id)
         else:
-            raise DuplicateUserGroupException
+            ug = self.query.filter_by(active=self.active, phone_number=self.phone_number)
+        return ug.first()
 
-    @classmethod
-    def update_user_group(cls, user_group):
-        if not isinstance(user_group, UserGroup):
-            raise TypeError('UserGroup.update_user_group requires type UserGroup')
+    def update(self):
+        db.session.add(self)
+        return self
 
-        db.session.add(user_group)
-        return user_group
+    def destroy(self):
+        db.session.delete(self)
+        return self
 
-    @classmethod
-    def delete_user_group(cls, user_group_name, active=True):
-        db.session.delete(cls.read_user_group(user_group_name=user_group_name, active=active))
+    # FIXME: Need to call Twilio for new number here:
+    # def create(self):
+    #     if not self.show():
+    #         self.groups_to_users.append(self.user)
+    #         db.session.add(self)
+    #     else:
+    #         raise DuplicateUserGroupException
+
+    def show_users(self):
+        return {user for user in self.query.filter_by(id=self.id).first().groups_to_users if user.active}
+
+    def append_message(self, message):
+        self.messages.append(message)
+        db.session.add(self)
 
 
 class User(Base):
@@ -104,14 +90,13 @@ class User(Base):
     fname = db.Column(db.String(35))
     lname = db.Column(db.String(35))
     phone = db.Column(db.String(15), unique=True, nullable=False)
-
-    # Authorisation Data: role & status
     active = db.Column(db.Boolean, nullable=False)
-    # FIXME: Need to add user groups
+    # FIXME: Need to add user groups owned/admined
     # admin = db.relationship('UserGroup', backref='user', lazy='dynamic')
+
+    messages = db.relationship('Message', backref='user', lazy='dynamic')
     users_groups = db.relationship('UserGroup', secondary=groups_to_users,
                                    backref=db.backref('groups_of_user', lazy=True))
-    messages = db.relationship('Message', backref='user', lazy='dynamic')
 
     def __init__(self, phone, active=True, role='U', fname=None, lname=None):
         self.role = role
@@ -122,38 +107,36 @@ class User(Base):
 
     # FIXME: Move some of these into magic methods
     # FIXME: Lazy commit
-    @classmethod
-    def _find_user(cls, phone, active=True):
-        return cls.query.filter_by(phone=phone, active=active)
+    def create(self):
+        if not self.show():
+            db.session.add(self)
+        else:
+            raise DuplicateUserException
+        return self
 
-    @classmethod
-    def read_user(cls, phone, active=True):
-        return cls._find_user(phone=phone, active=active).first()
+    def show(self):
+        user = self.query.filter_by(phone=self.phone, active=self.active)
+        if user.first():
+            return user.first()
+        #FIXME: Need to send the new user into new user flow
+        return self.create()
 
-    @classmethod
-    def create_user(cls, phone, fname=None, lname=None, active=True, role=USER_ROLE):
-        if not cls.read_user(phone):
-            user = cls(
-                phone=phone,
-                fname=fname,
-                lname=lname,
-                active=active,
-                role=role
-            )
-            db.session.add(user)
-            return user
+    def edit(self):
+        db.session.add(self)
+        return self
 
-    @classmethod
-    def update_user(cls, user):
-        if not isinstance(user, cls):
-            raise TypeError('User.update_user.user needs to be type User')
+    def update(self):
+        db.session.add(self)
+        return self
 
-        db.session.add(user)
-        return user
+    def destroy(self, phone, active=True):
+        db.session.delete(self)
+        return self
 
-    @classmethod
-    def delete_user(cls, phone, active=True):
-        db.session.delete(cls.read_user(phone=phone, active=active))
+    def append_message(self, message):
+        self.messages.append(message)
+        db.session.add(self)
+
 
 
 class Message(Base):
@@ -185,32 +168,25 @@ class Message(Base):
         self.from_zip = from_zip
         self.from_country = from_country
 
-    @classmethod
-    def _find_message(cls, sms_message_sid):
-        return cls.query.filter_by(sms_message_sid=sms_message_sid)
+    def create(self):
+        if not self.show():
+            db.session.add(self)
+        else:
+            raise DuplicateMessageException
+        return self
 
-    @classmethod
-    def read_message(cls, sms_message_sid):
-        return cls._find_message(sms_message_sid).first()
+    def show(self):
+        message = self.query.filter_by(sms_message_sid=self.sms_message_sid)
+        return message.first()
 
-    @classmethod
-    def create_message(cls, sms_message_sid, body, sms_status, to_number,
-                       to_zip, to_country, from_number, from_zip, from_country):
+    def edit(self):
+        db.session.add(self)
+        return self
 
-        message = cls(
-            sms_message_sid=sms_message_sid,
-            body=body,
-            sms_status=sms_status,
-            to_number=to_number,
-            to_zip=to_zip,
-            to_country=to_country,
-            from_number=from_number,
-            from_zip=from_zip,
-            from_country=from_country
-        )
-        db.session.add(message)
-        return message
+    def update(self):
+        db.session.add(self)
+        return self
 
-    @classmethod
-    def delete_message(cls, sms_message_sid):
-        db.session.delete(cls._find_message(sms_message_sid=sms_message_sid))
+    def destroy(self):
+        db.session.delete(self)
+        return self
