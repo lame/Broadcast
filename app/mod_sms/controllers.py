@@ -5,6 +5,9 @@ from twilio import TwilioRestException
 from app import app, tc, db
 from app.mod_sms.adapters import MessageRequest
 from app.mod_sms.models import UserGroup, User, Message
+
+# I would like to pull this from app.mod_templates.base_message
+#   but there seems to be a lookup error on Heroku
 from app.mod_sms.templates import base_message
 
 
