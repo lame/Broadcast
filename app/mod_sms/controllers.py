@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask import request, Response
 from flask_restful import Resource
 from twilio import TwilioRestException
@@ -54,19 +55,22 @@ class InboundMessage(BaseMessage):
         user_group, user, message = self.save_message(self.request())
         body = base_message(message=message, user=user, user_group=user_group)
         # TODO: add regex matching for other path than trigger_group_message
-        OutboundMessage.trigger_group_message(user_group=user_group, user=user, body=body)
+        OutboundMessage.trigger_group_message(user_group=user_group, user=user,
+                                              body=body, message_sid=message.sms_message_sid)
 
 
 class OutboundMessage(BaseMessage):
     """docstring for OutboundMessage"""
 
     @classmethod
-    def trigger_group_message(cls, user_group, user, body):
+    def trigger_group_message(cls, user_group, user, body, message_sid=None):
         users = user_group.show_users()
         users.discard(user)
 
         while users:
             cls.post(user_group=user_group, to_user=users.pop(), sent_from_user=user, body=body)
+
+        return 'Message {message_sid} sent at {datetime}'.format(message_sid=message_sid, datetime=str(datetime.now()))
 
     @staticmethod
     def post(user_group, to_users, from_user, body):
