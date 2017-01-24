@@ -52,26 +52,29 @@ class InboundMessage(BaseMessage):
     """docstring for InboundMessage"""
 
     def post(self):
-        user_group, user, message = self.save_message(self.request())
-        body = base_message(message=message, user=user, user_group=user_group)
-        # TODO: add regex matching for other path than trigger_group_message
-        OutboundMessage.trigger_group_message(user_group=user_group, user=user,
-                                              body=body, message_sid=message.sms_message_sid)
+        try:
+            user_group, user, message = self.save_message(self.request())
+            body = base_message(message=message, user=user, user_group=user_group)
+            # TODO: add regex matching for other path than trigger_group_message
+            OutboundMessage.trigger_group_message(user_group=user_group, user=user, body=body)
+            resp_message = 'Message {message_sid} sent at {datetime}'.format(message_sid=message.sms_message_sid,
+                                                                             datetime=str(datetime.now()))
+        except Exception as e:
+            return Response('Server Error, Please try again later, {0}'.format(e), status=500,  mimetype='text/plain; charset=utf-8')
+
+        return Response(status=200, mimetype='text/plain; charset=utf-8')
 
 
 class OutboundMessage(BaseMessage):
     """docstring for OutboundMessage"""
 
     @classmethod
-    def trigger_group_message(cls, user_group, user, body, message_sid=None):
+    def trigger_group_message(cls, user_group, user, body):
         users = user_group.show_users()
         users.discard(user)
 
         while users:
             cls.post(user_group=user_group, to_user=users.pop(), sent_from_user=user, body=body)
-
-        resp_message = 'Message {message_sid} sent at {datetime}'.format(message_sid=message_sid, datetime=str(datetime.now()))
-        return Response(resp_message, content_type='text/xml; charset=utf-8')
 
     @staticmethod
     def post(user_group, to_users, from_user, body):
