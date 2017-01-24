@@ -1,6 +1,6 @@
 import os
 
-from configparser import SafeConfigParser
+from configparser import ConfigParser
 from flask import Flask
 from flask_restful import Api
 from flask_sqlalchemy import SQLAlchemy
@@ -17,7 +17,7 @@ except:
   raise EnvironmentError('Environmental variable "BROADCAST_ENV" not found or unrecognized value')
 
 app.config.from_object('config.' + ENV)
-parser = SafeConfigParser()
+parser = ConfigParser()
 api = Api(app)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)

@@ -1,7 +1,8 @@
 import re
 
-from flask import request
+from flask import request, current_app
 from flask_restful import reqparse
+from urllib.parse import urlparse
 
 
 FIRST_CAP_RE = re.compile('(.)([A-Z][a-z]+)')
@@ -28,7 +29,7 @@ class MessageRequest(object):
         self.from_country = kwargs.get('from_country')
 
         self.num_segments = kwargs.get('num_segments')
-        self.media_url = kwargs.get('media_url0')
+        self.media_url = self._format_media_urls(kwargs.get('media_url0'))
         self.media_content_type = kwargs.get('media_content_type0')
         self.api_version = kwargs.get('api_version')
 
@@ -78,3 +79,11 @@ class MessageRequest(object):
             message_reqparse.add_argument('Body', type=str, required=False, location='json')
 
         return {self.convert(x): y for x, y in message_reqparse.parse_args().items()}
+
+    def _format_media_urls(self, media_url):
+        if media_url:
+            parsed_url = urlparse(media_url)
+            return 'https://{sid}:{auth}@{url}'.format(sid=current_app.config.get('TWILIO_ACCOUNT_SID'),
+                                                       auth=current_app.config.get('TWILIO_ACCOUNT_AUTH'),
+                                                       url=parsed_url.netloc + parsed_url.path)
+        return None
