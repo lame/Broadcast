@@ -68,8 +68,6 @@ class OutboundMessage(BaseMessage):
         while users:
             cls.post(user_group=user_group, to_user=users.pop(), sent_from_user=user, body=body)
 
-        return Response(mimetype='text/xml')
-
     @staticmethod
     def post(user_group, to_users, from_user, body):
         if to_user.active:
