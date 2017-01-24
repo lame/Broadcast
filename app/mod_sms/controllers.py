@@ -35,7 +35,8 @@ class BaseMessage(Resource, MessageRequest):
             from_number=parsed_request.from_number,
             from_zip=parsed_request.from_zip,
             from_country=parsed_request.from_country,
-            media_url=parsed_request.media_url
+            media_url=parsed_request.media_url,
+            media_content_type=parsed_request.media_content_type
         ).create()
 
         user = User(phone=parsed_request.from_number).show()
@@ -78,15 +79,22 @@ class OutboundMessage(BaseMessage):
             cls.post(user_group=user_group, to_user=users.pop(), message=message, sent_from_user=user, body=body)
 
     @staticmethod
-    def post(user_group, to_users, from_user, body):
+    def post(user_group, message, to_users, from_user, body):
         if to_user.active:
             try:
-                tc.messages.create(
-                    to=user.phone,
-                    from_=user_group.phone,
-                    body=body,
-                    media_url=message.media_url
-                )
+                if not message.media_url:
+                    tc.messages.create(
+                        to=user.phone,
+                        from_=user_group.phone,
+                        body=body
+                    )
+                else:
+                    tc.media.create(
+                        to=user.phone,
+                        from_=user_group.phone,
+                        body=body,
+                        media_url=message.media_url
+                    )
             except TwilioRestException as e:
                 print(e)
             except Exception as other_exception:

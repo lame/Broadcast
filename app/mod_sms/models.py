@@ -116,10 +116,8 @@ class User(Base):
 
     def show(self):
         user = self.query.filter_by(phone=self.phone, active=self.active)
-        if user.first():
-            return user.first()
+        return user.first()
         #FIXME: Need to send the new user into new user flow
-        return self.create()
 
     def edit(self):
         db.session.add(self)
@@ -153,6 +151,7 @@ class Message(Base):
     from_zip = db.Column(db.Integer, nullable=False)
     from_country = db.Column(db.String(5), nullable=False)
     media_url = db.Column(db.String, nullable=True)
+    media_content_type = db.Column(db.String, nullable=True)
     api_version = db.Column(db.String, nullable=True)
     num_segments = db.Column(db.Integer, nullable=True)
 
@@ -160,7 +159,7 @@ class Message(Base):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
     def __init__(self, body, sms_message_sid, sms_status, to_number, media_url,
-                 to_zip, to_country, from_number, from_zip, from_country):
+                 to_zip, to_country, from_number, from_zip, from_country, media_content_type):
         self.body = body
         self.sms_message_sid = sms_message_sid
         self.sms_status = sms_status
@@ -171,6 +170,7 @@ class Message(Base):
         self.from_zip = from_zip
         self.from_country = from_country
         self.media_url = media_url
+        self.media_content_type = media_content_type
 
     def create(self):
         if not self.show():

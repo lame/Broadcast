@@ -13,7 +13,7 @@ class MessageRequest(object):
         kwargs = self.parse_request()
         self.sms_status = kwargs.get('sms_status')
         self.sms_message_sid = kwargs.get('sms_message_sid')
-        self.body = kwargs.get('body')
+        self.body = kwargs.get('body', '')
 
         self.to_number = self.validate_phone_numbers(kwargs.get('to'))
         self.to_city = kwargs.get('to_city')
@@ -28,7 +28,8 @@ class MessageRequest(object):
         self.from_country = kwargs.get('from_country')
 
         self.num_segments = kwargs.get('num_segments')
-        self.media_url = kwargs.get('media_url_0')
+        self.media_url = kwargs.get('media_url0')
+        self.media_content_type = kwargs.get('media_content_type0')
         self.api_version = kwargs.get('api_version')
 
     def request(self):
@@ -67,6 +68,7 @@ class MessageRequest(object):
             message_reqparse.add_argument('FromZip', type=str, required=True, location='values')
 
             message_reqparse.add_argument('MediaUrl0', type=str, required=False, location='values')
+            message_reqparse.add_argument('MediaContentType0', type=str, required=False, location='values')
             message_reqparse.add_argument('NumSegments', type=int, required=False, location='values')
             message_reqparse.add_argument('ApiVersion', type=str, required=False, location='values')
 
