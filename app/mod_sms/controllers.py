@@ -70,8 +70,8 @@ class OutboundMessage(BaseMessage):
         while users:
             cls.post(user_group=user_group, to_user=users.pop(), sent_from_user=user, body=body)
 
-        print('Message {message_sid} sent at {datetime}'.format(message_sid=message_sid, datetime=str(datetime.now())))
-        return Response(mimetype='text/plain')
+        resp_message = 'Message {message_sid} sent at {datetime}'.format(message_sid=message_sid, datetime=str(datetime.now())))
+        return Response(resp_message, content_type='text/xml; charset=utf-8')
 
     @staticmethod
     def post(user_group, to_users, from_user, body):
