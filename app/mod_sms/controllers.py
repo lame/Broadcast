@@ -76,25 +76,18 @@ class OutboundMessage(BaseMessage):
         users.discard(user)
 
         while users:
-            cls.post(user_group=user_group, to_user=users.pop(), message=message, sent_from_user=user, body=body)
+            cls.post(user_group=user_group, to_user=users.pop(), message=message, body=body)
 
     @staticmethod
-    def post(user_group, message, to_users, from_user, body):
+    def post(user_group, message, to_user, body):
         if to_user.active:
             try:
-                if not message.media_url:
-                    tc.messages.create(
-                        to=user.phone,
-                        from_=user_group.phone,
-                        body=body
-                    )
-                else:
-                    tc.media.create(
-                        to=user.phone,
-                        from_=user_group.phone,
-                        body=body,
-                        media_url=message.media_url
-                    )
+                tc.messages.create(
+                    to=to_user.phone,
+                    from_=user_group.phone,
+                    body=body,
+                    media_url=message.media_url
+                )
             except TwilioRestException as e:
                 print(e)
             except Exception as other_exception:

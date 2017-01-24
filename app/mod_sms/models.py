@@ -8,8 +8,8 @@ USER_ROLE = 0
 
 groups_to_users = db.Table(
     'groups_to_users',
-    db.Column('user_group_id', db.Integer, db.ForeignKey('user_group.id')),
-    db.Column('user_id', db.Integer, db.ForeignKey('user.id')))
+    db.Column('user_group_id', db.Integer, db.ForeignKey('user_groups.id')),
+    db.Column('user_id', db.Integer, db.ForeignKey('users.id')))
 
 
 class Base(db.Model):
@@ -30,11 +30,11 @@ class UserGroup(Base):
     Many:Many UserGroup -> User
     1:Many UserGroup -> Message
     """
-    __tablename__ = 'user_group'
+    __tablename__ = 'user_groups'
 
     id = db.Column(db.Integer, primary_key=True)
     active = db.Column(db.Boolean, nullable=False)
-    name = db.Column(db.String(60), unique=True)
+    name = db.Column(db.String(60), nullable=False)
     phone = db.Column(db.String(15), nullable=False)
     # FIXME: Need to add user group admins later
     # group_admin = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -43,7 +43,7 @@ class UserGroup(Base):
     groups_to_users = db.relationship('User', secondary=groups_to_users,
                                       backref=db.backref('users_in_group', lazy='dynamic'))
 
-    def __init__(self, phone, user_group_name=None, active=True):
+    def __init__(self, phone, name=None, active=True):
         self.active = active
         self.name = name
         self.phone = phone
@@ -52,7 +52,7 @@ class UserGroup(Base):
         if self.id:
             ug = self.query.filter_by(id = self.id)
         else:
-            ug = self.query.filter_by(active=self.active, phone_number=self.phone)
+            ug = self.query.filter_by(active=self.active, phone=self.phone)
         return ug.first()
 
     def update(self):
@@ -84,7 +84,7 @@ class User(Base):
     1:Many User -> UserGroup
     1:Many User -> Messages
     """
-    __tablename__ = 'user'
+    __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
     fname = db.Column(db.String(35))
@@ -138,7 +138,7 @@ class User(Base):
 
 
 class Message(Base):
-    __tablename__ = 'message'
+    __tablename__ = 'messages'
 
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     sms_message_sid = db.Column(db.String(160), nullable=False)
@@ -155,8 +155,8 @@ class Message(Base):
     api_version = db.Column(db.String, nullable=True)
     num_segments = db.Column(db.Integer, nullable=True)
 
-    user_group_id = db.Column(db.Integer, db.ForeignKey('user_group.id'))
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_group_id = db.Column(db.Integer, db.ForeignKey('user_groups.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
     def __init__(self, body, sms_message_sid, sms_status, to_number, media_url,
                  to_zip, to_country, from_number, from_zip, from_country, media_content_type):
