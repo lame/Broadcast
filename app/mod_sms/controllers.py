@@ -64,7 +64,7 @@ class InboundMessage(BaseMessage):
         except Exception as e:
             return Response('Server Error, Please try again later, {0}'.format(e), status=500,  mimetype='text/plain; charset=utf-8')
 
-        return Response(status=200, mimetype='text/plain; charset=utf-8')
+        return Response(status=204, mimetype='text/plain; charset=utf-8')
 
 
 class OutboundMessage(BaseMessage):
