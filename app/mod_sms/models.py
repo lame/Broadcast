@@ -34,8 +34,8 @@ class UserGroup(Base):
 
     id = db.Column(db.Integer, primary_key=True)
     active = db.Column(db.Boolean, nullable=False)
-    user_group_name = db.Column(db.String(60), unique=True)
-    phone_number = db.Column(db.String(15), nullable=False)
+    name = db.Column(db.String(60), unique=True)
+    phone = db.Column(db.String(15), nullable=False)
     # FIXME: Need to add user group admins later
     # group_admin = db.Column(db.Integer, db.ForeignKey('user.id'))
 
@@ -43,16 +43,16 @@ class UserGroup(Base):
     groups_to_users = db.relationship('User', secondary=groups_to_users,
                                       backref=db.backref('users_in_group', lazy='dynamic'))
 
-    def __init__(self, phone_number, user_group_name=None, active=True):
+    def __init__(self, phone, user_group_name=None, active=True):
         self.active = active
-        self.user_group_name = user_group_name
-        self.phone_number = phone_number
+        self.name = name
+        self.phone = phone
 
     def show(self):
         if self.id:
             ug = self.query.filter_by(id = self.id)
         else:
-            ug = self.query.filter_by(active=self.active, phone_number=self.phone_number)
+            ug = self.query.filter_by(active=self.active, phone_number=self.phone)
         return ug.first()
 
     def update(self):
@@ -152,11 +152,14 @@ class Message(Base):
     from_number = db.Column(db.String(15), nullable=False)
     from_zip = db.Column(db.Integer, nullable=False)
     from_country = db.Column(db.String(5), nullable=False)
+    media_url = db.Column(db.String, nullable=True)
+    api_version = db.Column(db.String, nullable=True)
+    num_segments = db.Column(db.Integer, nullable=True)
 
     user_group_id = db.Column(db.Integer, db.ForeignKey('user_group.id'))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
-    def __init__(self, body, sms_message_sid, sms_status, to_number,
+    def __init__(self, body, sms_message_sid, sms_status, to_number, media_url,
                  to_zip, to_country, from_number, from_zip, from_country):
         self.body = body
         self.sms_message_sid = sms_message_sid
@@ -167,6 +170,7 @@ class Message(Base):
         self.from_number = from_number
         self.from_zip = from_zip
         self.from_country = from_country
+        self.media_url = media_url
 
     def create(self):
         if not self.show():

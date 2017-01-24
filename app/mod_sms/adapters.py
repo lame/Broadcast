@@ -27,6 +27,10 @@ class MessageRequest(object):
         self.from_zip = kwargs.get('from_zip')
         self.from_country = kwargs.get('from_country')
 
+        self.num_segments = kwargs.get('num_segments')
+        self.media_url = kwargs.get('media_url_0')
+        self.api_version = kwargs.get('api_version')
+
     def request(self):
         return self
 
@@ -39,7 +43,7 @@ class MessageRequest(object):
     @staticmethod
     def validate_phone_numbers(phone_number):
         if phone_number[:1] != '+':
-            phone_number = '+' + phone_number
+            phone_number = '+' + phone_number.strip()
         return phone_number
 
     def parse_request(self):
@@ -62,8 +66,13 @@ class MessageRequest(object):
             message_reqparse.add_argument('FromCountry', type=str, required=True, location='values')
             message_reqparse.add_argument('FromZip', type=str, required=True, location='values')
 
+            message_reqparse.add_argument('MediaUrl0', type=str, required=False, location='values')
+            message_reqparse.add_argument('NumSegments', type=int, required=False, location='values')
+            message_reqparse.add_argument('ApiVersion', type=str, required=False, location='values')
+
+
         else:
             message_reqparse.add_argument('To', type=str, required=True, help='to_phone_number not provided', location='json')
             message_reqparse.add_argument('Body', type=str, required=False, location='json')
 
-        return {self.convert(x): y.strip() for x, y in message_reqparse.parse_args().items()}
+        return {self.convert(x): y for x, y in message_reqparse.parse_args().items()}

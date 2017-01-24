@@ -92,3 +92,4 @@ ENV/
 instances/
 migrations/
 app.db
+run.py
