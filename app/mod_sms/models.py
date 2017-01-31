@@ -69,7 +69,7 @@ class UserGroup(Base):
     #         self.groups_to_users.append(self.user)
     #         db.session.add(self)
     #     else:
-    #         raise DuplicateUserGroupException
+    #         raise DuplicateUserGroupException('Duplicate User Group: {0}'.format(self.id))
 
     def show_users(self):
         return {user for user in self.query.filter_by(id=self.id).first().groups_to_users if user.active}
@@ -111,7 +111,7 @@ class User(Base):
         if not self.show():
             db.session.add(self)
         else:
-            raise DuplicateUserException
+            raise DuplicateUserException('Duplicate User: {0}'.format(self.id))
         return self
 
     def show(self):
@@ -146,9 +146,11 @@ class Message(Base):
     sms_status = db.Column(db.String(20), nullable=False)
     to_number = db.Column(db.String(15), nullable=False)
     to_zip = db.Column(db.Integer, nullable=False)
+    to_city = db.Column(db.String, nullable=True)
     to_country = db.Column(db.String(5), nullable=False)
     from_number = db.Column(db.String(15), nullable=False)
     from_zip = db.Column(db.Integer, nullable=False)
+    from_city = db.Column(db.String, nullable=True)
     from_country = db.Column(db.String(5), nullable=False)
     media_url = db.Column(db.String, nullable=True)
     media_content_type = db.Column(db.String, nullable=True)
@@ -159,15 +161,18 @@ class Message(Base):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
     def __init__(self, body, sms_message_sid, sms_status, to_number, media_url,
-                 to_zip, to_country, from_number, from_zip, from_country, media_content_type):
+                 to_country, from_number, from_country, media_content_type,
+                 to_city=None, to_zip=None, from_city=None, from_zip=None):
         self.body = body
         self.sms_message_sid = sms_message_sid
         self.sms_status = sms_status
         self.to_number = to_number
-        self.to_zip = to_zip
+        self.to_zip = self._fill_null_zip(to_zip)
+        self.to_city = to_city
         self.to_country = to_country
         self.from_number = from_number
-        self.from_zip = from_zip
+        self.from_zip = self._fill_null_zip(from_zip)
+        self.from_city = from_city
         self.from_country = from_country
         self.media_url = media_url
         self.media_content_type = media_content_type
@@ -176,7 +181,7 @@ class Message(Base):
         if not self.show():
             db.session.add(self)
         else:
-            raise DuplicateMessageException
+            raise DuplicateMessageException('Duplicate Message SID: {0}'.format(self.sms_message_sid))
         return self
 
     def show(self):
@@ -194,3 +199,9 @@ class Message(Base):
     def destroy(self):
         db.session.delete(self)
         return self
+
+    @staticmethod
+    def _fill_null_zip(zip):
+        if not zip:
+            return 0
+        return zip

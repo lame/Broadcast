@@ -9,7 +9,7 @@ from app.mod_sms.models import UserGroup, User, Message
 
 # I would like to pull this from app.mod_templates.base_message
 #   but there seems to be a lookup error on Heroku
-from app.mod_sms.templates import base_message
+from app.mod_templates.base_message import base_message
 
 
 class Test(Resource):
@@ -31,9 +31,11 @@ class BaseMessage(Resource, MessageRequest):
             sms_status=parsed_request.sms_status,
             to_number=parsed_request.to_number,
             to_zip=parsed_request.to_zip,
+            to_city=parsed_request.to_city,
             to_country=parsed_request.to_country,
             from_number=parsed_request.from_number,
             from_zip=parsed_request.from_zip,
+            from_city=parsed_request.from_city,
             from_country=parsed_request.from_country,
             media_url=parsed_request.media_url,
             media_content_type=parsed_request.media_content_type
@@ -48,6 +50,21 @@ class BaseMessage(Resource, MessageRequest):
         message.commit()
 
         return user_group, user, message
+
+    @staticmethod
+    def send_message(user_group, to_user, body, media_url=None):
+        if to_user.active:
+            try:
+                tc.messages.create(
+                    to=to_user.phone,
+                    from_=user_group.phone,
+                    body=body,
+                    media_url=media_url
+                )
+            except TwilioRestException as e:
+                print(e)
+            except Exception as other_exception:
+                print(other_exception)
 
 
 class InboundMessage(BaseMessage):
@@ -76,19 +93,10 @@ class OutboundMessage(BaseMessage):
         users.discard(user)
 
         while users:
-            cls.post(user_group=user_group, to_user=users.pop(), message=message, body=body)
+            cls.send_message(user_group=user_group, to_user=users.pop(), body=body, media_url=message.media_url)
 
-    @staticmethod
-    def post(user_group, message, to_user, body):
-        if to_user.active:
-            try:
-                tc.messages.create(
-                    to=to_user.phone,
-                    from_=user_group.phone,
-                    body=body,
-                    media_url=message.media_url
-                )
-            except TwilioRestException as e:
-                print(e)
-            except Exception as other_exception:
-                print(other_exception)
+    @classmethod
+    def trigger_bot_message(cls, user_group, user, body):
+        cls.send_message(user_group=user_group, user=user, body=body)
+
+
