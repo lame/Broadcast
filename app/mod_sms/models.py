@@ -49,11 +49,7 @@ class UserGroup(Base):
         self.phone = phone
 
     def show(self):
-        if self.id:
-            ug = self.query.filter_by(id = self.id)
-        else:
-            ug = self.query.filter_by(active=self.active, phone=self.phone)
-        return ug.first()
+        return self.query.filter_by(active=self.active, phone=self.phone).first()
 
     def update(self):
         db.session.add(self)
@@ -64,12 +60,12 @@ class UserGroup(Base):
         return self
 
     # FIXME: Need to call Twilio for new number here:
-    # def create(self):
-    #     if not self.show():
-    #         self.groups_to_users.append(self.user)
-    #         db.session.add(self)
-    #     else:
-    #         raise DuplicateUserGroupException('Duplicate User Group: {0}'.format(self.id))
+    def create(self):
+        if not self.show():
+            self.groups_to_users.append(self.user)
+            db.session.add(self)
+        else:
+            raise DuplicateUserGroupException('Duplicate User Group: {0}'.format(self.id))
 
     def show_users(self):
         return {user for user in self.query.filter_by(id=self.id).first().groups_to_users if user.active}

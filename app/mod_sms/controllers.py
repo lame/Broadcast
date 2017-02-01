@@ -6,9 +6,6 @@ from twilio import TwilioRestException
 from app import app, tc, db
 from app.mod_sms.adapters import MessageRequest
 from app.mod_sms.models import UserGroup, User, Message
-
-# I would like to pull this from app.mod_templates.base_message
-#   but there seems to be a lookup error on Heroku
 from app.mod_templates.base_message import base_message
 
 
@@ -51,6 +48,7 @@ class BaseMessage(Resource, MessageRequest):
 
         return user_group, user, message
 
+    # FIXME: Need to setup proper logging
     @staticmethod
     def send_message(user_group, to_user, body, media_url=None):
         if to_user.active:
@@ -66,6 +64,16 @@ class BaseMessage(Resource, MessageRequest):
             except Exception as other_exception:
                 print(other_exception)
 
+    @staticmethod
+    def purchase_phone_number(user, area_code=None):
+        try:
+            purchased_number = tc.phone_numbers.purchase(area_code=user.phone[2:5])
+        except:
+            purchased_number = tc.phone_numbers.purchase(area_code=310)
+
+        # FIXME: The sms_url should presumably be an ENV Var
+        purchased_number.update(sms_method='POST', sms_url='https://broadcast-production.herokuapp.com/inbound')
+        return purchased_number
 
 class InboundMessage(BaseMessage):
     """docstring for InboundMessage"""
