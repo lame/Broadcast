@@ -17,7 +17,6 @@ except:
   raise EnvironmentError('Environmental variable "BROADCAST_ENV" not found or unrecognized value')
 
 basedir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-print(basedir)
 app.config.from_pyfile(basedir + '/config.py')
 
 parser = ConfigParser()
