@@ -16,15 +16,19 @@ try:
 except:
   raise EnvironmentError('Environmental variable "BROADCAST_ENV" not found or unrecognized value')
 
-app.config.from_object('config.' + ENV)
+basedir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+print(basedir)
+app.config.from_pyfile(basedir + '/config.py')
+
 parser = ConfigParser()
 api = Api(app)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 tc = TwilioRestClient(
     app.config.get('TWILIO_ACCOUNT_SID'),
-    app.config.get('TWILIO_ACCOUNT_AUTH')
+    app.config.get('TWILIO_ACCOUNT_AUTH'),
 )
 
-# FIXME
-from app.mod_sms import views, models, controllers, routes
+# Routes
+from app.mod_sms import routes
+from app.mod_bot import routes
