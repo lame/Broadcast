@@ -1,21 +1,21 @@
 import unittest
+
 from nose.tools import assert_true
-# from app import app
+
+from app import app, db
 
 
 class TestUselessTests(unittest.TestCase):
-    def setup(self):
-        pass
-        # app.config['TESTING'] = True
-        # app.config['WTF_CSRF_ENABLED'] = False
-        # app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'test.db')
+    # def setup(self):
+    #     app.config['TESTING'] = True
+    #     app.config['WTF_CSRF_ENABLED'] = False
+    #     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'test.db')
 
-        # db.create_all()
+    #     db.create_all()
 
-    def tearDown(self):
-        pass
-        # db.session.remove()
-        # db.drop_all()
+    # def tearDown(self):
+    #     db.session.remove()
+    #     db.drop_all()
 
     def test_nothing(self):
         assert_true(True)
@@ -42,8 +42,7 @@ class TestUselessTests(unittest.TestCase):
     #     AccountSid='ACd54f610007bb0fbf352df81d4fdff7dd',
     #     From='+16269882527',
     #     ApiVersion='2010-04-01'
-
     #   )
 
-    #   response = self.test_app.post('/inbound', params=params)
+    #   response = self.test_app.post('/inbound', data=params)
     #   self.assertEquals(response.status, "200 OK")
