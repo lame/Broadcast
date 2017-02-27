@@ -70,8 +70,9 @@ class UserGroup(Base):
     def show_users(self):
         return {user for user in self.query.filter_by(id=self.id).first().groups_to_users if user.active}
 
-    def append_message(self, message):
-        self.messages.append(message)
+    def append_message(self, message, user):
+        if user.active and self in user.users_groups:
+            self.messages.append(message)
         db.session.add(self)
 
 
@@ -90,7 +91,8 @@ class User(Base):
     # FIXME: Need to add user groups owned/admined
     # admin = db.relationship('UserGroup', backref='user', lazy='dynamic')
 
-    messages = db.relationship('Message', backref='user', lazy='dynamic')
+    onboarding = db.relationship('UserOnboarding', uselist=False, backref="user_onboard")
+    messages = db.relationship('Message', backref='user_messages', lazy='dynamic')
     users_groups = db.relationship('UserGroup', secondary=groups_to_users,
                                    backref=db.backref('groups_of_user', lazy=True))
 
@@ -104,16 +106,17 @@ class User(Base):
     # FIXME: Move some of these into magic methods
     # FIXME: Lazy commit
     def create(self):
-        if not self.show():
-            db.session.add(self)
-        else:
-            raise DuplicateUserException('Duplicate User: {0}'.format(self.id))
+        db.session.add(self)
         return self
 
     def show(self):
         user = self.query.filter_by(phone=self.phone, active=self.active)
-        return user.first()
-        #FIXME: Need to send the new user into new user flow
+        if user.first():
+            return user.first()
+
+        self.active = False
+        return self.create()
+        # FIXME: Need to send the new user into new user flow
 
     def edit(self):
         db.session.add(self)
@@ -131,6 +134,34 @@ class User(Base):
         self.messages.append(message)
         db.session.add(self)
 
+    @property
+    def is_active(self):
+        return self.active
+
+
+class UserOnboarding(Base):
+    """
+    One to One -> User
+    """
+    __tablename__ = 'user_onboarding'
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+    completed = db.Column(db.Boolean, nullable=False, default=False)
+    step = db.Column(db.Integer, nullable=False, default=0)
+    opt_in = db.Column(db.Boolean, nullable=False, default=False)
+    fname = db.Column(db.String, nullable=True)
+    lname = db.Column(db.String, nullable=True)
+    phone = db.Column(db.String, nullable=True)
+
+    user = db.Column(db.Integer, db.ForeignKey('users.id'))
+
+    def __init__(self, step=0, completed=False, opt_in=False,
+                 fname=None, lname=None, phone=None):
+        self.step = step
+        self.completed = False
+        self.opt_in = opt_in
+        self.fname = fname
+        self.lname = lname
+        self.phone = phone
 
 
 class Message(Base):
