@@ -89,9 +89,7 @@ class InboundMessage(BaseMessage):
             # FIXME: Need to add this to logger
             # logger.info('Message {message_sid} sent at {datetime}'.format(message_sid=message.sms_message_sid, datetime=str(datetime.now())))
         except Exception as e:
-            resp = TwiMLResponse()
-            resp.sms = failure_message()
-            return str(resp)
+            return Response('Server Error, Please try again later, {0}'.format(e), status=500, mimetype='text/plain; charset=utf-8')
 
         return Response(status=204, mimetype='text/plain; charset=utf-8')
 
@@ -116,6 +114,4 @@ class FailedMessage(BaseMessage):
     """There was a message failure in InboundMessage and the API returned a 5XX"""
 
     def get(self):
-        resp = TwiMLResponse()
-        resp.sms = failure_message()
-        return str(resp)
+        return Response('Server Error, Please try again later', status=200, mimetype='text/plain; charset=utf-8')
