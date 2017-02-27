@@ -39,7 +39,6 @@ class BaseMessage(Resource, MessageRequest):
             media_content_type=parsed_request.media_content_type
         ).create()
 
-        # from nose.tools import set_trace; set_trace()
         user = User(phone=parsed_request.from_number).show()
         user.append_message(message)
 
@@ -90,7 +89,9 @@ class InboundMessage(BaseMessage):
             # FIXME: Need to add this to logger
             # logger.info('Message {message_sid} sent at {datetime}'.format(message_sid=message.sms_message_sid, datetime=str(datetime.now())))
         except Exception as e:
-            return Response('Server Error, Please try again later, {0}'.format(e), status=500, mimetype='text/plain; charset=utf-8')
+            resp = TwiMLResponse()
+            resp.sms = failure_message()
+            return str(resp)
 
         return Response(status=204, mimetype='text/plain; charset=utf-8')
 
