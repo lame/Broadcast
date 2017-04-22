@@ -93,3 +93,4 @@ instances/
 migrations/
 app.db
 run.py
+oh_shit.py
